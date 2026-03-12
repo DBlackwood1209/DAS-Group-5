@@ -1,7 +1,18 @@
 ---
 title: "Group_5_Analysis"
-format: html
-editor: visual
+author: "Group 05"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    theme: cosmo
+  pdf:
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
 ---
 
 ## Introduction
