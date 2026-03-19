@@ -322,7 +322,7 @@ The estimated dispersion parameter in the negative binomial model (θ ≈ 120,00
 ## Model comparison
 
 ```{r}
-
+A Poisson regression model was initially fitted for the count outcome. The dispersion statistic (residual deviance/df ≈ 0.59) indicated no evidence of overdispersion. A quasi-Poisson model confirmed this finding (φ ≈ 0.61), suggesting slight underdispersion. A negative binomial model was also considered; however, the estimated dispersion parameter was extremely large, indicating that it effectively reduces to a Poisson model. Therefore, the Poisson model was retained for interpretation.
 ```
 
 ## Diagnostics
