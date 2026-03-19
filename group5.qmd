@@ -271,29 +271,6 @@ deviance(model_poisson) / df.residual(model_poisson)
 
 No evidence of overdispersion was found (residual deviance/df ≈ 0.59), suggesting that the Poisson model is appropriate.
 
-## Quasi-Poisson
-
-```{r}
-#| message: false
-#| echo: false
-model_quasi_poisson <- glm(
-  Total.Number.of.Family.members ~ 
-        log_income + 
-    log_food_exp + 
-    Household.Head.Age + 
-    log_floor_area + 
-    House.Age + 
-    Number.of.bedrooms +
-    Household.Head.Sex +
-    Type.of.Household +
-    Electricity,
-  family = quasipoisson(link = "log"),
-  data = df_clean
-)
-summary(model_quasi_poisson)
-```
-
-A quasi-Poisson model was fitted to account for potential dispersion. The estimated dispersion parameter (φ ≈ 0.61) indicates slight underdispersion, suggesting no evidence of overdispersion. The coefficient estimates were consistent with the Poisson model, while standard errors were adjusted accordingly. Therefore, the Poisson model was deemed appropriate for inference.
 ### Negative Binomial
 
 ```{r}
