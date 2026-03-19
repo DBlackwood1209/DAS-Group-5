@@ -1,6 +1,7 @@
 ---
 title: "Group_5_Analysis"
 author: "Group 05"
+
 format:
   html:
     toc: true
@@ -9,17 +10,17 @@ format:
     theme: cosmo
   pdf:
     number-sections: true
-execute:
-  echo: true
-  warning: false
-  message: false
 ---
 
-## Introduction
+## 1 Introduction
 
-## Setup
+This project explores which household-related variables contribute to the number of people living in a household using Dataset05 from the Family Income and Expenditure Survey (FIES) in the Philippines. The response variable is `Total.Number.of.Family.members`, which is a count outcome. Therefore, Poisson regression, Quasi-Poisson and Negative Binomial are appropriate.
+
+We begin with exploratory data analysis, then fit a Poisson regression model as the baseline count model. Considering count data often exhibit overdispersion, a Negative Binomial model is tried in the analysis to explore whether it provides a better fit. The research aims to identify the main household characteristics associated with household size and interpret these relationships carefully.
 
 ```{r}
+#| message: false
+#| warning: false
 library(tidyverse)
 library(janitor)
 library(skimr)
@@ -36,9 +37,14 @@ library(ggplot2)
 library(patchwork)
 ```
 
-## Data description
+## 2 Data description and processing
+
+### 2.1 Data overview
 
 ```{r}
+#| message: false
+#| echo: false
+
 df <- read_csv("D:/dataset05.csv")
 
 glimpse(df)
@@ -47,11 +53,7 @@ summary(df)
 
 The dataset contains 1,788 household-level observations and 11 variables. These variables describe household income, expenditure, demographic characteristics of the household head, housing conditions, and household size. Both numeric and categorical variables are included in the dataset, as identified during the initial inspection using the `glimpse()` and `summary()`. In particular, `Total.Number.of.Family.members` is the response variable of interest, while `Region`, `Household.Head.Sex`, and `Type.of.Household` are categorical variables, and the remaining variables are numeric.
 
-Based on the summary statistics, it is highly likely that several economic and housing variables, such as household income, food expenditure, and floor area, are right-skewed. This is important because skewed predictors may affect model stability and interpretability, and therefore should be considered carefully during preprocessing.
-
-## Data cleaning and preprocessing
-
-### Initial checks
+### 2.2 Initial checks
 
 ```{r}
 dim(df)
@@ -59,16 +61,18 @@ names(df)
 colSums(is.na(df))
 ```
 
-### Check unique values for categorical variables
+### 2.4 Check unique values for categorical variables
 
 ```{r}
+#| message: false
+#| echo: false
 df %>% count(Region, sort = TRUE)
 df %>% count(Household.Head.Sex, sort = TRUE)
 df %>% count(Type.of.Household, sort = TRUE)
 df %>% count(Electricity, sort = TRUE)
 ```
 
-### Convert variable types
+### 2.5 Variable conversion and transformed variables
 
 ```{r}
 df_clean <- df %>%
@@ -79,8 +83,6 @@ df_clean <- df %>%
     Electricity = factor(Electricity, levels = c(0, 1), labels = c("No", "Yes"))
   )
 ```
-
-### Create transformed variables
 
 ```{r}
 df_clean <- df_clean %>%
@@ -96,11 +98,13 @@ Initial checks indicate that there are no missing values in the dataset, therefo
 
 The categorical variables `Household.Head.Sex`, `Type.of.Household`, and `Electricity` were converted into factor variables before modelling. This ensures that they are treated appropriately as categorical predictors in the GLM framework. Moreover, three skewed numeric variables - household income, food expenditure, and floor area - were log-transformed. These transformations reduce right-skewness, improve comparability across households and make the relationship between predictors and household size easier to interpret. A squared age term for the household head was also created as a possible extension for later analysis, in case the relationship between age and household size is nonlinear.
 
-## Exploratory data analysis
+## 3 Exploratory data analysis
 
-### Response variable distribution
+### 3.1 Response variable distribution
 
 ```{r}
+#| message: false
+#| echo: false
 df_clean %>%
   summarise(
     mean_family_size = mean(Total.Number.of.Family.members),
@@ -108,10 +112,21 @@ df_clean %>%
     min_family_size = min(Total.Number.of.Family.members),
     max_family_size = max(Total.Number.of.Family.members)
   ) %>%
-  kable()
+  kable(
+    caption = "Summary Statistics of Family Size",
+    digits = 2,
+    align = "c"
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  )
 ```
 
 ```{r}
+#| message: false
+#| echo: false
 ggplot(df_clean, aes(x = Total.Number.of.Family.members)) +
   geom_bar() +
   labs(
@@ -125,9 +140,11 @@ We use `Total.Number.of.Family.members` as the response variable. It ranges from
 
 The sample mean of household size is 4.55, while the sample variance is 4.79. Because the sample variance is close to the sample mean, there is no strong descriptive indication of substantial overdispersion at this stage. This supports the use of a Poisson regression model as a reasonable starting point for the count-data analysis.
 
-### Numeric variable distributions
+### 3.2 Numeric variable distributions
 
 ```{r}
+#| message: false
+#| echo: false
 p_income_raw <- ggplot(df_clean, aes(x = Total.Household.Income)) +
   geom_histogram(bins = 30) +
   labs(title = "Original household income", x = "Total household income", y = "Frequency")
@@ -161,36 +178,44 @@ The distributions of `Total.Household.Income`, `Total.Food.Expenditure`, and `Ho
 
 After log transformation, the distributions of these variables become more compact and regular. The transformed histograms show reduced skewness and a clearer concentration around central values. This provides visual support for the use of `log_income`, `log_food_exp`, and `log_floor_area` in the regression models. Overall, the transformation improves both model adequacy and interpretability, especially when comparing households with widely different economic and housing conditions.
 
-### Household size by categorical predictors
+### 3.3 Household size by categorical predictors
 
 ```{r}
+#| message: false
+#| echo: false
 ggplot(df_clean, aes(x = Household.Head.Sex, y = Total.Number.of.Family.members)) +
   geom_boxplot() +
-  labs(title = "Household size by sex of household head")
+  labs(title = "Distribution of Family Size by Household Head Sex")
 ```
 
 The boxplot shows that male-headed households tend to have larger household size than female-headed households. The median household size is higher for male-headed households, and their distribution also has a wider upper tail, indicating that larger households are more common in this group.
 
 ```{r}
+#| message: false
+#| echo: false
 ggplot(df_clean, aes(x = Type.of.Household, y = Total.Number.of.Family.members)) +
   geom_boxplot() +
-  labs(title = "Household size by type of household") +
+  labs(title = "Distribution of Family Size by Household Type") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 It is clear that there are differences in household size across household types. Single-family households appear to have the smallest and most concentrated household size distribution, with a median of around 4. By contrast, extended-family households have a higher median and a wider upper tail, indicating that larger households are more common in this group. The category of two or more unrelated members also tends to have relatively large household size, although this group is very small and results should be interpreted with caution.
 
 ```{r}
+#| message: false
+#| echo: false
 ggplot(df_clean, aes(x = Electricity, y = Total.Number.of.Family.members)) +
   geom_boxplot() +
-  labs(title = "Household size by electricity access")
+  labs(title = "Distribution of Family Size by Electricity Access")
 ```
 
 It is suggested that the relationship between electricity access and household size is weaker than that observed for household type or sex of household head. The median household size is similar across the two groups, but households with electricity show a wider upper range and more large-household outliers. This indicates that electricity access may still be associated with household size, although the pattern appears less evident than for the other categorical predictors.
 
-### Household size against numeric predictors
+### 3.4 Household size against numeric predictors
 
 ```{r}
+#| message: false
+#| echo: false
 GGally::ggpairs(
   dplyr::select(
     df_clean,
@@ -203,7 +228,8 @@ GGally::ggpairs(
     Number.of.bedrooms
   ),
   upper = list(continuous = "cor"),
-  lower = list(continuous = "points")
+  lower = list(continuous = "points"),
+  progress = FALSE
 )
 ```
 
@@ -211,42 +237,249 @@ The pairwise plot was used to summarise the relationships among the numeric vari
 
 In contrast, the association between household size and `House.Age` is very weak, while the relationship with `Household.Head.Age` is slightly negative. The latter may reflect household life-cycle effects, where households become smaller at older ages as children leave the home. The pairwise plot also reveals substantial correlation among some explanatory variables, especially between `log_income` and `log_food_exp`, and between `log_floor_area` and `Number.of.bedrooms`. These results suggest that some predictors may contain overlapping information, so multicollinearity should be considered during model fitting.
 
-## GLM modelling strategy
+### 3.5 Implications of EDA for modelling
 
-### Poisson regression
+Overall, the exploratory analysis suggests that it is appropriate to apply count-data modelling approach. Household size is not only a discrete response variable, but the distribution is moderately right-skewed and the mean is close to variance, so Poisson regression provides a reasonable starting point. The descriptive results indicate that household type, the sex of the household head, and various economic and housing variables may serve as significant predictors. Some numeric variables also have strong skewness, which supports the use of log transformations. Additionally, the correlation between some predictors suggests that multicollinearity should be checked during modeling
+
+## 4 GLM modelling and results
+
+### 4.1 Model specification
+
+In this study, the response variable is household size, defined as the number of members in each household. Since household size is a non-negative integer count observed for each household, a Poisson regression model was adopted as the baseline specification.
+
+This analysis uses the simple Poisson case rather than a Poisson model with an offset, because the response is a direct count per household rather than an event count observed over varying exposure times, population sizes, or risk periods.
+
+Let $Y_i$ denote the household size for household $i$, and let $X_i$ be the vector of explanatory variables. The Poisson regression model is specified as
+
+$$
+Y_i \mid X_i \sim \text{Poisson}(\mu_i), \qquad i = 1, \dots, n,
+$$
+
+with log link function
+
+$$
+\log(\mu_i) = \beta_0 + \beta_1 X_{i1} + \beta_2 X_{i2} + \cdots + \beta_p X_{ip}.
+$$
+
+Under the Poisson assumption,
+
+$$
+\mathbb{E}(Y_i \mid X_i) = \mathrm{Var}(Y_i \mid X_i) = \mu_i.
+$$
+
+An overdispersion check was then conducted after fitting the Poisson model. A Negative Binomial model was also fitted as a more flexible alternative specification for comparison.
+
+### 4.2 Poisson regression results
 
 ```{r}
-
+#| message: false
+#| echo: false
+model_poisson <- glm(
+  Total.Number.of.Family.members ~ 
+    log_income + 
+    log_food_exp + 
+    Household.Head.Age + 
+    log_floor_area + 
+    House.Age + 
+    Number.of.bedrooms +
+    Household.Head.Sex +
+    Type.of.Household +
+    Electricity,
+  family = poisson(link = "log"),
+  data = df_clean
+)
+summary(model_poisson)
 ```
 
-### Check for overdispersion
+A Poisson regression model was fitted to examine the relationship between household size and socioeconomic characteristics. The model showed a substantial reduction in deviance, indicating good model fit. `log_food_exp` was strongly positively associated with family size, specifically, a one-unit increase in log food expenditure is associated with an expected household size that is $e^{0.758}=2.133$ times as large. In contrast, `log_income` showed a negative relationship, suggesting that higher-income households tend to be smaller, with the expected household size changing by a factor of $e^{-0.380}=0.684$. Household structure variables, particularly single-family households, were also significant predictors. In contrast, variables such as floor area, number of bedrooms, and electricity access were not statistically significant.
+
+### 4.3 Check for overdispersion
 
 ```{r}
-
+deviance(model_poisson) / df.residual(model_poisson)
 ```
 
-### Quasi-Poisson
+Overdispersion was assessed using the ratio of residual deviance to residual degrees of freedom. The estimated value was $$
+\frac{\text{Residual deviance}}{\text{Residual df}}=\frac{1040.0}{1777}=0.585.
+$$
+
+Since the value is below 1, there is no evidence of overdispersion was found, suggesting that the Poisson model is appropriate.
+
+### 4.4 Negative Binomial
 
 ```{r}
-
+#| message: false
+#| echo: false
+#| warning: false
+model_nb <- glm.nb(
+  Total.Number.of.Family.members ~ 
+    log_income + 
+    log_food_exp + 
+    Household.Head.Age + 
+    log_floor_area + 
+    House.Age + 
+    Number.of.bedrooms +
+    Household.Head.Sex +
+    Type.of.Household +
+    Electricity,
+  data = df_clean
+)
+summary(model_nb)
+cat("θ = ",model_nb$theta)
 ```
 
-### Negative Binomial
+The estimated dispersion parameter in the negative binomial model ($\theta=120066.9$) is extremely large, indicating that the model effectively reduces to a Poisson model. This suggests no evidence of overdispersion. Additionally, the AIC of the negative binomial model was slightly higher than that of the Poisson model, supporting the use of the simpler Poisson specification.
+
+### 4.5 main findings
+
+The main findings indicate that household size is most strongly related to food expenditure, income, household head sex, and household type. Higher food expenditure is linked to larger households, whereas higher income is associated with smaller households. Male-headed households tend to have larger expected household sizes, while single-family households tend to have smaller expected household sizes compared with the reference group. Apart from that, household head age and house age have small but statistically significant negative effects.
+
+## 5 Model comparison
+
+Model comparison confirmed that the Poisson model is appropriate. The Poisson and Negative Binomial models produced almost identical coefficient estimates, standard errors, and significance patterns, indicating that the substantive findings are highly consistent across specifications. The Poisson model also achieved a slightly lower AIC (6917.3) than the Negative Binomial model (6919.3). Therefore, the Negative Binomial model did not improve model fit, and the simpler Poisson model is preferred.
+
+## 6 Diagnostics
+
+### 6.1 Residual diagnostics
 
 ```{r}
+#| message: false
+#| echo: false
 
+df_clean <- df_clean %>%
+  mutate(
+    pearson_resid = residuals(model_poisson, type = "pearson"),
+    deviance_resid = residuals(model_poisson, type = "deviance"),
+    fitted_values = fitted(model_poisson),
+    std_pearson_resid = rstandard(model_poisson, type = "pearson"),
+    cooksd = cooks.distance(model_poisson)
+  )
+
+p1 <- ggplot(df_clean, aes(x = fitted_values, y = pearson_resid)) +
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_smooth(se = FALSE, color = "blue") +
+  labs(
+    title = "Residuals vs Fitted",
+    x = "Fitted values",
+    y = "Pearson residuals"
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(df_clean, aes(sample = std_pearson_resid)) +
+  stat_qq(alpha = 0.3) +
+  stat_qq_line(color = "red") +
+  labs(
+    title = "Normal Q-Q",
+    x = "Theoretical quantiles",
+    y = "Standardized residuals"
+  ) +
+  theme_minimal()
+
+df_clean <- df_clean %>%
+  mutate(sqrt_abs_resid = sqrt(abs(std_pearson_resid)))
+
+p3 <- ggplot(df_clean, aes(x = fitted_values, y = sqrt_abs_resid)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(se = FALSE, color = "blue") +
+  labs(
+    title = "Scale-Location",
+    x = "Fitted values",
+    y = "√|Standardized residuals|"
+  ) +
+  theme_minimal()
+
+hat_values <- hatvalues(model_poisson)
+
+p4 <- ggplot(df_clean, aes(x = hat_values, y = std_pearson_resid)) +
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_smooth(se = FALSE, color = "blue") +
+  labs(
+    title = "Residuals vs Leverage",
+    x = "Leverage",
+    y = "Standardized residuals"
+  ) +
+  theme_minimal()
+
+library(patchwork)
+(p1 | p2) / (p3 | p4) +
+  plot_annotation(
+    title = "Residual Diagnostics for Poisson Model",
+    theme = theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+  )
 ```
 
-## Model comparison
+A set of four diagnostic plots was used to evaluate the adequacy of the Poisson model. The residuals show no clear pattern against fitted values, and the blue smoothing line remains close to zero across the range. The Q-Q plot indicates that the standardized residuals follow the diagonal line closely, with only minor deviations in the tails, suggesting that the residuals are approximately normally distributed. The scale-location plot shows a relatively constant spread of residuals across fitted values, with no obvious funnel shape, indicating that the variance assumption is reasonably satisfied. The residuals vs leverage plot reveals no points in the upper-right or lower-right corners, confirming that there are no influential observations with high leverage and large residuals simultaneously. Overall, these diagnostic plots confirm that the Poisson model provides an adequate fit to the data, with no major violations of model assumptions.
+
+### 6.2 Multicollinearity
 
 ```{r}
+#| message: false
+#| echo: false
 
+X <- model.matrix(model_poisson)
+X <- X[, -1]  
+
+vif_values <- sapply(1:ncol(X), function(i) {
+  fit <- lm(X[, i] ~ X[, -i])
+  1 / (1 - summary(fit)$r.squared)
+})
+
+names(vif_values) <- colnames(X)
+
+vif_df <- data.frame(
+  Term = names(vif_values),
+  VIF = round(vif_values, 2)
+) %>%
+  arrange(desc(VIF))
+
+kable(vif_df, 
+      caption = "Variance Inflation Factor (VIF)",
+      col.names = c("Term", "VIF")) %>%
+  kable_styling(full_width = FALSE, position = "center")
 ```
 
-## Diagnostics
+To assess multicollinearity among predictors, Variance Inflation Factor (VIF) was calculated. Most VIF values are below 5, indicating no severe multicollinearity for the majority of predictors. However, `log_income` has a VIF of 5.01, which slightly exceeds the conventional threshold of 5. This is expected given its strong correlation with `log_food_exp` (correlation ≈ 0.8 as shown in the pairwise plot). Despite this, both variables remain important for understanding household size: `log_food_exp` captures consumption needs of larger households, while `log_income` represents economic resources. The moderate multicollinearity inflates standard errors but does not bias coefficient estimates, and both variables remain statistically significant in the model. Therefore, no remedial action is required.
+
+### Robustness check: Excluding food expenditure
 
 ```{r}
+#| message: false
+#| echo: false
 
+model_no_food <- glm(
+  Total.Number.of.Family.members ~ 
+    log_income + 
+    Household.Head.Age + 
+    log_floor_area + 
+    House.Age + 
+    Number.of.bedrooms +
+    Household.Head.Sex +
+    Type.of.Household +
+    Electricity,
+  family = poisson(link = "log"),
+  data = df_clean
+)
+
+comparison_food <- data.frame(
+  Variable = c("log_income", "Household.Head.Age", "log_floor_area"),
+  With_Food = round(coef(model_poisson)[c("log_income", "Household.Head.Age", "log_floor_area")], 3),
+  Without_Food = round(coef(model_no_food)[c("log_income", "Household.Head.Age", "log_floor_area")], 3)
+)
+
+kable(comparison_food, 
+      caption = "Robustness Check 2: With vs Without Food Expenditure",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE, position = "center")
 ```
 
-## Conclusion
+The robustness of the findings was examined by fitting an alternative model that excluded `log_food_exp`. When `log_food_exp` is removed from the model, the coefficient for `log_income` changes substantially from negative (-0.380) to positive (0.162), and becomes statistically significant. This suggests that food expenditure acts as a suppressor variable, mediating the relationship between income and household size. The interpretation is that larger households spend more on food, and once food expenditure is controlled for, the direct effect of income is revealed to be negative. The coefficients for `Household.Head.Age` and `log_floor_area` remain small and non-significant in both specifications.
+
+This pattern is consistent with the interpretation that food expenditure mediates the relationship between income and household size, and highlights the importance of including both variables in the model.
+
+## 7 Conclusion
+
+In conclusion, this study investigated the factors associated with household size in the Philippines using data from 1,788 households. The results show that household size is most strongly related to food expenditure, household type, income, and household head sex. In particular, higher food expenditure is associated with larger household size, while single-family households tend to have fewer members than the reference household type. Income shows a weak negative association in the full model, although this relationship changes when food expenditure is excluded, suggesting that food expenditure may partly account for the association between income and household size. Male-headed households also tend to have slightly larger family sizes than female-headed households.
+
+Diagnostic checks indicated that the Poisson model was adequate, with no evidence of overdispersion, and comparison with the Negative Binomial model further supported the Poisson specification. Overall, the model provides a useful baseline for understanding household size determinants in this population, although future work could explore regional variation and possible interaction effects.
