@@ -1,0 +1,334 @@
+---
+title: "Group_5_Analysis"
+author: "Group 05"
+
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    theme: cosmo
+  pdf:
+    number-sections: true
+---
+
+## Introduction
+
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(janitor)
+library(skimr)
+library(GGally)
+library(MASS)
+library(AER)
+library(car)
+library(broom)
+library(performance)
+library(pscl)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(patchwork)
+```
+
+## Data description
+
+```{r}
+#| message: false
+#| echo: false
+
+df <- read_csv("C:/Users/USER/Desktop/g2/dataset05.csv")
+
+glimpse(df)
+summary(df)
+```
+
+The dataset contains 1,788 household-level observations and 11 variables. These variables describe household income, expenditure, demographic characteristics of the household head, housing conditions, and household size. Both numeric and categorical variables are included in the dataset, as identified during the initial inspection using the `glimpse()` and `summary()`. In particular, `Total.Number.of.Family.members` is the response variable of interest, while `Region`, `Household.Head.Sex`, and `Type.of.Household` are categorical variables, and the remaining variables are numeric.
+
+Based on the summary statistics, it is highly likely that several economic and housing variables, such as household income, food expenditure, and floor area, are right-skewed. This is important because skewed predictors may affect model stability and interpretability, and therefore should be considered carefully during preprocessing.
+
+## Data cleaning and preprocessing
+
+### Initial checks
+
+```{r}
+dim(df)
+names(df)
+colSums(is.na(df))
+```
+
+### Check unique values for categorical variables
+
+```{r}
+#| message: false
+#| echo: false
+df %>% count(Region, sort = TRUE)
+df %>% count(Household.Head.Sex, sort = TRUE)
+df %>% count(Type.of.Household, sort = TRUE)
+df %>% count(Electricity, sort = TRUE)
+```
+
+### Convert variable types
+
+```{r}
+df_clean <- df %>%
+  mutate(
+    Region = as.factor(Region),
+    Household.Head.Sex = as.factor(Household.Head.Sex),
+    Type.of.Household = as.factor(Type.of.Household),
+    Electricity = factor(Electricity, levels = c(0, 1), labels = c("No", "Yes"))
+  )
+```
+
+### Create transformed variables
+
+```{r}
+df_clean <- df_clean %>%
+  mutate(
+    log_income = log(Total.Household.Income),
+    log_food_exp = log(Total.Food.Expenditure),
+    log_floor_area = log(House.Floor.Area),
+    head_age_sq = Household.Head.Age^2
+  )
+```
+
+Initial checks indicate that there are no missing values in the dataset, therefore no imputation or complete-case filtering was required, and the full sample of 1,788 households was retained throughout the analysis. Frequency tables for the categorical variables show that all observations come from a single region, IX - Zamboanga Peninsula. Consequently, `Region` contains no within-sample variation and cannot contribute to explaining differences in household size across households. It is therefore excluded from the regression analysis.
+
+The categorical variables `Household.Head.Sex`, `Type.of.Household`, and `Electricity` were converted into factor variables before modelling. This ensures that they are treated appropriately as categorical predictors in the GLM framework. Moreover, three skewed numeric variables - household income, food expenditure, and floor area - were log-transformed. These transformations reduce right-skewness, improve comparability across households and make the relationship between predictors and household size easier to interpret. A squared age term for the household head was also created as a possible extension for later analysis, in case the relationship between age and household size is nonlinear.
+
+## Exploratory data analysis
+
+### Response variable distribution
+
+```{r}
+#| message: false
+#| echo: false
+df_clean %>%
+  summarise(
+    mean_family_size = mean(Total.Number.of.Family.members),
+    var_family_size = var(Total.Number.of.Family.members),
+    min_family_size = min(Total.Number.of.Family.members),
+    max_family_size = max(Total.Number.of.Family.members)
+  ) %>%
+  kable(
+    caption = "Summary Statistics of Family Size",
+    digits = 2,
+    align = "c"
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  )
+```
+
+```{r}
+#| message: false
+#| echo: false
+ggplot(df_clean, aes(x = Total.Number.of.Family.members)) +
+  geom_bar() +
+  labs(
+    title = "Distribution of household size",
+    x = "Number of family members",
+    y = "Count"
+  ) 
+```
+
+We use `Total.Number.of.Family.members` as the response variable. It ranges from 1 to 15 and is clearly a discrete count variable. It is clear that the distribution of household size is moderately right-skewed, with most households containing between 3 and 6 members. This pattern is consistent with the nature of household survey data, where medium-sized households are common and very large households are relatively rare.
+
+The sample mean of household size is 4.55, while the sample variance is 4.79. Because the sample variance is close to the sample mean, there is no strong descriptive indication of substantial overdispersion at this stage. This supports the use of a Poisson regression model as a reasonable starting point for the count-data analysis.
+
+### Numeric variable distributions
+
+```{r}
+#| message: false
+#| echo: false
+p_income_raw <- ggplot(df_clean, aes(x = Total.Household.Income)) +
+  geom_histogram(bins = 30) +
+  labs(title = "Original household income", x = "Total household income", y = "Frequency")
+
+p_income_log <- ggplot(df_clean, aes(x = log_income)) +
+  geom_histogram(bins = 30) +
+  labs(title = "Log household income", x = "Log household income", y = "Frequency")
+
+p_food_raw <- ggplot(df_clean, aes(x = Total.Food.Expenditure)) +
+  geom_histogram(bins = 30) +
+  labs(title = "Original food expenditure", x = "Total food expenditure", y = "Frequency")
+
+p_food_log <- ggplot(df_clean, aes(x = log_food_exp)) +
+  geom_histogram(bins = 30) +
+  labs(title = "Log food expenditure", x = "Log food expenditure", y = "Frequency")
+
+p_area_raw <- ggplot(df_clean, aes(x = House.Floor.Area)) +
+  geom_histogram(bins = 30) +
+  labs(title = "Original floor area", x = "House floor area", y = "Frequency")
+
+p_area_log <- ggplot(df_clean, aes(x = log_floor_area)) +
+  geom_histogram(bins = 30) +
+  labs(title = "Log floor area", x = "Log floor area", y = "Frequency")
+
+(p_income_raw | p_income_log) /
+(p_food_raw   | p_food_log) /
+(p_area_raw   | p_area_log)
+```
+
+The distributions of `Total.Household.Income`, `Total.Food.Expenditure`, and `House.Floor.Area` are clearly right-skewed in original scales. For each of these variables, the raw histograms show that most observations are concentrated at relatively low values, with only a few households take much larger values. This indicates the presence of long right tails and suggests that the original scales may not be ideal for modelling.
+
+After log transformation, the distributions of these variables become more compact and regular. The transformed histograms show reduced skewness and a clearer concentration around central values. This provides visual support for the use of `log_income`, `log_food_exp`, and `log_floor_area` in the regression models. Overall, the transformation improves both model adequacy and interpretability, especially when comparing households with widely different economic and housing conditions.
+
+### Household size by categorical predictors
+
+```{r}
+#| message: false
+#| echo: false
+ggplot(df_clean, aes(x = Household.Head.Sex, y = Total.Number.of.Family.members)) +
+  geom_boxplot() +
+  labs(title = "Distribution of Family Size by Household Head Sex")
+```
+
+The boxplot shows that male-headed households tend to have larger household size than female-headed households. The median household size is higher for male-headed households, and their distribution also has a wider upper tail, indicating that larger households are more common in this group.
+
+```{r}
+#| message: false
+#| echo: false
+ggplot(df_clean, aes(x = Type.of.Household, y = Total.Number.of.Family.members)) +
+  geom_boxplot() +
+  labs(title = "Distribution of Family Size by Household Type") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+It is clear that there are differences in household size across household types. Single-family households appear to have the smallest and most concentrated household size distribution, with a median of around 4. By contrast, extended-family households have a higher median and a wider upper tail, indicating that larger households are more common in this group. The category of two or more unrelated members also tends to have relatively large household size, although this group is very small and results should be interpreted with caution.
+
+```{r}
+#| message: false
+#| echo: false
+ggplot(df_clean, aes(x = Electricity, y = Total.Number.of.Family.members)) +
+  geom_boxplot() +
+  labs(title = "Distribution of Family Size by Electricity Access")
+```
+
+It is suggested that the relationship between electricity access and household size is weaker than that observed for household type or sex of household head. The median household size is similar across the two groups, but households with electricity show a wider upper range and more large-household outliers. This indicates that electricity access may still be associated with household size, although the pattern appears less evident than for the other categorical predictors.
+
+### Household size against numeric predictors
+
+```{r}
+#| message: false
+#| echo: false
+GGally::ggpairs(
+  dplyr::select(
+    df_clean,
+    Total.Number.of.Family.members,
+    log_income,
+    log_food_exp,
+    Household.Head.Age,
+    log_floor_area,
+    House.Age,
+    Number.of.bedrooms
+  ),
+  upper = list(continuous = "cor"),
+  lower = list(continuous = "points"),
+  progress = FALSE
+)
+```
+
+The pairwise plot was used to summarise the relationships among the numeric variables. In relation to household size, the strongest positive association appears with `log_food_exp`, followed by a weaker positive association with `log_income`. Household size is also positively related, though more weakly, to `log_floor_area` and `Number.of.bedrooms`. These patterns are plausible, since larger households may require more food expenditure and may also occupy larger dwellings with more bedrooms.
+
+In contrast, the association between household size and `House.Age` is very weak, while the relationship with `Household.Head.Age` is slightly negative. The latter may reflect household life-cycle effects, where households become smaller at older ages as children leave the home. The pairwise plot also reveals substantial correlation among some explanatory variables, especially between `log_income` and `log_food_exp`, and between `log_floor_area` and `Number.of.bedrooms`. These results suggest that some predictors may contain overlapping information, so multicollinearity should be considered during model fitting.
+
+## GLM modelling strategy
+
+### Poisson regression
+
+```{r}
+#| message: false
+#| echo: false
+model_poisson <- glm(
+  Total.Number.of.Family.members ~ 
+    log_income + 
+    log_food_exp + 
+    Household.Head.Age + 
+    log_floor_area + 
+    House.Age + 
+    Number.of.bedrooms +
+    Household.Head.Sex +
+    Type.of.Household +
+    Electricity,
+  family = poisson(link = "log"),
+  data = df_clean
+)
+summary(model_poisson)
+```
+
+A Poisson regression model was fitted to examine the relationship between household size and socioeconomic characteristics. The model showed a substantial reduction in deviance, indicating good model fit. Food expenditure was strongly positively associated with family size, while income showed a negative relationship. Household structure variables, particularly single-family households, were also significant predictors. In contrast, variables such as floor area, number of bedrooms, and electricity access were not statistically significant.
+
+### Check for overdispersion
+
+```{r}
+deviance(model_poisson) / df.residual(model_poisson)
+```
+
+No evidence of overdispersion was found (residual deviance/df ≈ 0.59), suggesting that the Poisson model is appropriate.
+
+## Quasi-Poisson
+
+```{r}
+#| message: false
+#| echo: false
+model_quasi_poisson <- glm(
+  Total.Number.of.Family.members ~ 
+        log_income + 
+    log_food_exp + 
+    Household.Head.Age + 
+    log_floor_area + 
+    House.Age + 
+    Number.of.bedrooms +
+    Household.Head.Sex +
+    Type.of.Household +
+    Electricity,
+  family = quasipoisson(link = "log"),
+  data = df_clean
+)
+summary(model_quasi_poisson)
+```
+
+A quasi-Poisson model was fitted to account for potential dispersion. The estimated dispersion parameter (φ ≈ 0.61) indicates slight underdispersion, suggesting no evidence of overdispersion. The coefficient estimates were consistent with the Poisson model, while standard errors were adjusted accordingly. Therefore, the Poisson model was deemed appropriate for inference.
+### Negative Binomial
+
+```{r}
+#| message: false
+#| echo: false
+#| warning: false
+model_nb <- glm.nb(
+  Total.Number.of.Family.members ~ 
+    log_income + 
+    log_food_exp + 
+    Household.Head.Age + 
+    log_floor_area + 
+    House.Age + 
+    Number.of.bedrooms +
+    Household.Head.Sex +
+    Type.of.Household +
+    Electricity,
+  data = df_clean
+)
+summary(model_nb)
+cat("θ = ",model_nb$theta)
+```
+
+The estimated dispersion parameter in the negative binomial model (θ ≈ 120,000) is extremely large, indicating that the model effectively reduces to a Poisson model. This suggests no evidence of overdispersion. Additionally, the AIC of the negative binomial model was slightly higher than that of the Poisson model, supporting the use of the simpler Poisson specification.
+
+## Model comparison
+
+```{r}
+
+```
+
+## Diagnostics
+
+```{r}
+
+```
+
+## Conclusion
