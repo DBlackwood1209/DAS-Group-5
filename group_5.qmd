@@ -308,6 +308,7 @@ Model comparison confirmed that the Poisson model is appropriate. The dispersion
 ```{r}
 #| message: false
 #| echo: false
+#| warning: false
 
 X <- model.matrix(model_poisson)
 X <- X[, -1]  
@@ -338,6 +339,7 @@ To assess multicollinearity among predictors, Variance Inflation Factor (VIF) wa
 ```{r}
 #| message: false
 #| echo: false
+#| warning: false
 
 df_clean <- df_clean %>%
   mutate(
@@ -409,6 +411,7 @@ A set of four diagnostic plots was used to evaluate the adequacy of the Poisson 
 ```{r}
 #| message: false
 #| echo: false
+#| warning: false
 
 cooksd <- cooks.distance(model_poisson)
 threshold <- 4/nrow(df_clean)
@@ -465,6 +468,7 @@ theta_value <- model_nb$theta
 ```{r}
 #| message: false
 #| echo: false
+#| warning: false
 
 aic_compare <- AIC(model_poisson, model_nb)
 
@@ -483,6 +487,7 @@ A Negative Binomial model was fitted to assess whether a more flexible count mod
 ```{r}
 #| message: false
 #| echo: false
+#| warning: false
 
 model_no_food <- glm(
   Total.Number.of.Family.members ~ 
@@ -518,6 +523,7 @@ This pattern is consistent with the interpretation that food expenditure mediate
 ```{r}
 #| message: false
 #| echo: false
+#| warning: false
 
 # Model with quadratic age term
 model_age_sq <- glm(
@@ -556,6 +562,7 @@ kable(age_terms,
 ```{r}
 #| message: false
 #| echo: false
+#| warning: false
 
 aic_age <- AIC(model_poisson, model_age_sq)
 ```
