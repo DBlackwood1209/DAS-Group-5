@@ -173,7 +173,7 @@ p_area_log <- ggplot(df_clean, aes(x = log_floor_area)) +
 (p_area_raw   | p_area_log)
 ```
 
-The distributions of `Total.Household.Income`, `Total.Food.Expenditure`, and `House.Floor.Area` are clearly right-skewed in original scales. For each of these variables, the raw histograms show that most observations are concentrated at relatively low values, with only a few households take much larger values. This indicates the presence of long right tails and suggests that the original scales may not be ideal for modelling.
+The distributions of `Total.Household.Income`, `Total.Food.Expenditure`, and `House.Floor.Area` are clearly right-skewed in original scales. For each of these variables, the raw histograms show that most observations are concentrated at relatively low values, with only a few households taking much larger values. This indicates the presence of long right tails and suggests that the original scales may not be ideal for modelling.
 
 After log transformation, the distributions of these variables become more compact and regular. The transformed histograms show reduced skewness and a clearer concentration around central values. This provides visual support for the use of `log_income`, `log_food_exp`, and `log_floor_area` in the regression models. Overall, the transformation improves both model adequacy and interpretability, especially when comparing households with widely different economic and housing conditions.
 
