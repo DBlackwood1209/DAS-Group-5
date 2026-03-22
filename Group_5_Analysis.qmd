@@ -238,7 +238,7 @@ In contrast, the association between household size and `House.Age` is very weak
 
 ### Implications of EDA for Modelling
 
-Overall, the exploratory analysis suggests that it is appropriate to apply count-data modelling approach. Household size is not only a discrete response variable, but the distribution is moderately right-skewed and the mean is close to variance, so Poisson regression provides a reasonable starting point. The descriptive results indicate that household type, the sex of the household head, and various economic and housing variables may serve as significant predictors. Some numeric variables also have strong skewness, which supports the use of log transformations. Additionally, the correlation between some predictors suggests that multicollinearity should be checked during modeling
+Overall, the exploratory analysis suggests that a count-data modelling approach is appropriate. Household size is not only a discrete response variable, but the distribution is moderately right-skewed and the mean is close to the variance, so Poisson regression provides a reasonable starting point. The descriptive results indicate that household type, the sex of the household head, and various economic and housing variables may serve as significant predictors. Some numeric variables also exhibit strong skewness, which supports the use of log transformations. Additionally, the correlation between some predictors suggests that multicollinearity should be checked during modelling.
 
 ## GLM modelling and results
 
