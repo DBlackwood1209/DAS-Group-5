@@ -440,7 +440,11 @@ kable(vif_df,
   kable_styling(full_width = FALSE, position = "center")
 ```
 
-To assess multicollinearity among predictors, Variance Inflation Factor (VIF) was calculated. Most VIF values are below 5, indicating no severe multicollinearity for the majority of predictors. However, `log_income` has a VIF of 5.01, which slightly exceeds the conventional threshold of 5. This is expected given its strong correlation with `log_food_exp` (correlation ≈ 0.8 as shown in the pairwise plot). Despite this, both variables remain important for understanding household size: `log_food_exp` captures consumption needs of larger households, while `log_income` represents economic resources. The moderate multicollinearity inflates standard errors but does not bias coefficient estimates, and both variables remain statistically significant in the model. Therefore, no remedial action is required.
+To assess multicollinearity among predictors, Variance Inflation Factor (VIF) was calculated. Most VIF values are below 5, indicating no severe multicollinearity for the majority of predictors. However, log_income has a VIF of 5.01, which slightly exceeds the conventional threshold, and is highly correlated with log_food_exp (correlation ≈ 0.8).
+
+While these values do not indicate extreme multicollinearity, they suggest a moderate degree of dependence between key explanatory variables. This is further supported by the robustness check, where the coefficient of log_income changes sign when log_food_exp is excluded.
+
+This pattern is consistent with a suppression effect, where correlated variables influence each other's estimated coefficients. Therefore, although multicollinearity is not severe, it may affect the stability and interpretation of individual coefficients.
 
 ### Robustness Check: Excluding Food Expenditure
 
