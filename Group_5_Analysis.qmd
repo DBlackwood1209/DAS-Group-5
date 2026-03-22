@@ -466,17 +466,30 @@ comparison_food <- data.frame(
   Variable = c("log_income", "Household.Head.Age", "log_floor_area"),
   With_Food = round(coef(model_poisson)[c("log_income", "Household.Head.Age", "log_floor_area")], 3),
   Without_Food = round(coef(model_no_food)[c("log_income", "Household.Head.Age", "log_floor_area")], 3)
-)
+) %>%
+  mutate(
+    Change = round(Without_Food - With_Food, 3),
+    Direction_Change = ifelse(
+      sign(With_Food) != sign(Without_Food) & abs(Change) > 0.1,
+      "Yes", "No"
+    )
+  )
 
-kable(comparison_food, 
-      caption = "Robustness Check 2: With vs Without Food Expenditure",
-      digits = 3) %>%
+kable(
+  comparison_food,
+  caption = "Sensitivity Check: Coefficients With and Without Food Expenditure",
+  digits = 3
+) %>%
   kable_styling(full_width = FALSE, position = "center")
 ```
 
-The robustness of the findings was examined by fitting an alternative model that excluded `log_food_exp`. When `log_food_exp` is removed from the model, the coefficient for `log_income` changes substantially from negative (-0.380) to positive (0.162), and becomes statistically significant. This suggests that food expenditure acts as a suppressor variable, mediating the relationship between income and household size. The interpretation is that larger households spend more on food, and once food expenditure is controlled for, the direct effect of income is revealed to be negative. The coefficients for `Household.Head.Age` and `log_floor_area` remain small and non-significant in both specifications.
+The robustness of the findings was assessed by estimating an alternative specification that excludes log_food_exp. Table X compares the coefficients across the two models.
 
-This pattern is consistent with the interpretation that food expenditure mediates the relationship between income and household size, and highlights the importance of including both variables in the model.
+The results show that the coefficient for log_income changes substantially from negative (-0.380) to positive (0.162), indicating a strong sensitivity to model specification. This suggests that food expenditure is closely related to income and captures an important aspect of household consumption associated with household size.
+
+In contrast, the coefficients for Household.Head.Age and log_floor_area remain relatively small and show only minor changes across specifications, indicating greater stability.
+
+Overall, these findings suggest that the model is not fully robust, and the estimated effects—particularly for income—should be interpreted with caution.
 
 ## Conclusion
 
