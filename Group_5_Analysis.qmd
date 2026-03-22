@@ -104,6 +104,7 @@ The categorical variables `Household.Head.Sex`, `Type.of.Household`, and `Electr
 ```{r}
 #| message: false
 #| echo: false
+#| warning: false
 df_clean %>%
   summarise(
     mean_family_size = mean(Total.Number.of.Family.members),
@@ -417,6 +418,7 @@ A set of four diagnostic plots was used to evaluate the adequacy of the Poisson 
 ```{r}
 #| message: false
 #| echo: false
+#| warning: false
 
 X <- model.matrix(model_poisson)
 X <- X[, -1]  
@@ -451,6 +453,7 @@ This pattern is consistent with a suppression effect, where correlated variables
 ```{r}
 #| message: false
 #| echo: false
+#| warning: false
 
 model_no_food <- glm(
   Total.Number.of.Family.members ~ 
