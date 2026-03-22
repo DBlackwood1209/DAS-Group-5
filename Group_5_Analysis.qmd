@@ -412,7 +412,7 @@ library(patchwork)
 
 A set of four diagnostic plots was used to evaluate the adequacy of the Poisson model. The residuals show no clear pattern against fitted values, and the blue smoothing line remains close to zero across the range. The Q-Q plot indicates that the standardized residuals follow the diagonal line closely, with only minor deviations in the tails, suggesting that the residuals are approximately normally distributed. The scale-location plot shows a relatively constant spread of residuals across fitted values, with no obvious funnel shape, indicating that the variance assumption is reasonably satisfied. The residuals vs leverage plot reveals no points in the upper-right or lower-right corners, confirming that there are no influential observations with high leverage and large residuals simultaneously. Overall, these diagnostic plots confirm that the Poisson model provides an adequate fit to the data, with no major violations of model assumptions.
 
-### 6.2 Multicollinearity
+### Multicollinearity
 
 ```{r}
 #| message: false
