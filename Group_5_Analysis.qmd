@@ -473,20 +473,23 @@ comparison_food <- data.frame(
   mutate(
     Change = round(Without_Food - With_Food, 3),
     Direction_Change = ifelse(
-      sign(With_Food) != sign(Without_Food) & abs(Change) > 0.1,
+      sign(With_Food) != sign(Without_Food),
       "Yes", "No"
     )
   )
 
+rownames(comparison_food) <- NULL
+
 kable(
   comparison_food,
   caption = "Sensitivity Check: Coefficients With and Without Food Expenditure",
-  digits = 3
+  digits = 3,
+  row.names = FALSE
 ) %>%
   kable_styling(full_width = FALSE, position = "center")
 ```
 
-The robustness of the findings was assessed by estimating an alternative specification that excludes `log_food_exp`. `Table X` compares the coefficients across the two models.
+The robustness of the findings was assessed by estimating an alternative specification that excludes `log_food_exp`. The table below compares the coefficients across the two models.
 
 The results show that the coefficient for `log_income` changes substantially from negative (-0.380) to positive (0.162), indicating a strong sensitivity to model specification. This suggests that food expenditure is closely related to income and captures an important aspect of household consumption associated with household size.
 
