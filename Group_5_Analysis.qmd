@@ -198,7 +198,7 @@ ggplot(df_clean, aes(x = Type.of.Household, y = Total.Number.of.Family.members))
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-It is clear that there are differences in household size across household types. Single-family households appear to have the smallest and most concentrated household size distribution, with a median of around 4. By contrast, extended-family households have a higher median and a wider upper tail, indicating that larger households are more common in this group. The category of two or more unrelated members also tends to have relatively large household size, although this group is very small and results should be interpreted with caution.
+The results suggest that there are differences in household size across household types. Single-family households appear to have the smallest and most concentrated household size distribution, with a median of around 4. By contrast, extended-family households have a higher median and a wider upper tail, indicating that larger households are more common in this group. The category of two or more unrelated members also tends to have relatively large household size, although this group is very small and results should be interpreted with caution.
 
 ```{r}
 #| message: false
