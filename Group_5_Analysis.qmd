@@ -14,7 +14,7 @@ format:
 
 ## Introduction
 
-This project explores which household-related variables contribute to the number of people living in a household using Dataset05 from the Family Income and Expenditure Survey (FIES) in the Philippines. The response variable is `Total.Number.of.Family.members`, which is a count outcome. Therefore, Poisson, Quasi-Poisson, and Negative Binomial models are appropriate.
+This project explores which household-related variables contribute to the number of people living in a household using Dataset05 from the Family Income and Expenditure Survey (FIES) in the Philippines. The response variable is `Total.Number.of.Family.members`, which is a count outcome. Therefore, Poisson and Negative Binomial models are appropriate candidate models.
 We begin with exploratory data analysis, then fit a Poisson regression model as the baseline count model. Considering count data often exhibit overdispersion, a Negative Binomial model is also fitted for comparison to explore whether it provides a better fit. The research aims to identify the main household characteristics associated with household size and interpret these relationships carefully.
 
 ```{r}
@@ -498,7 +498,7 @@ The results show that the coefficient for `log_income` changes substantially fro
 
 In contrast, the coefficients for `Household.Head.Age` and `log_floor_area` remain relatively small and show only minor changes across specifications, indicating greater stability.
 
-Overall, these findings suggest that the model is not fully robust, and the estimated effects—particularly for income—should be interpreted with caution.
+Overall, the results show that most coefficients are stable, but the effect of income is sensitive to model specification.
 
 ## Conclusion
 
