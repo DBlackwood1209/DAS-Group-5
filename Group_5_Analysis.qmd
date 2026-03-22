@@ -303,7 +303,7 @@ $$
 \frac{\text{Residual deviance}}{\text{Residual df}}=\frac{1040.0}{1777}=0.585.
 $$
 
-Since the value is below 1, there is no evidence of overdispersion was found, suggesting that the Poisson model is appropriate.
+The value is below 1, indicating slight underdispersion rather than overdispersion. However, the deviation is not substantial, and the Poisson model remains appropriate.
 
 ### Negative Binomial
 
