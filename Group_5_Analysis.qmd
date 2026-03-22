@@ -135,7 +135,7 @@ ggplot(df_clean, aes(x = Total.Number.of.Family.members)) +
   ) 
 ```
 
-We use `Total.Number.of.Family.members` as the response variable. It ranges from 1 to 15 and is clearly a discrete count variable. It is clear that the distribution of household size is moderately right-skewed, with most households containing between 3 and 6 members. This pattern is consistent with the nature of household survey data, where medium-sized households are common and very large households are relatively rare.
+We use `Total.Number.of.Family.members` as the response variable. It ranges from 1 to 15 and is clearly a discrete count variable. The distribution of household size appears to be moderately right-skewed, with most households containing between 3 and 6 members. This pattern is consistent with the nature of household survey data, where medium-sized households are common and very large households are relatively rare.
 
 The sample mean of household size is 4.55, while the sample variance is 4.79. Because the sample variance is close to the sample mean, there is no strong descriptive indication of substantial overdispersion at this stage. This supports the use of a Poisson regression model as a reasonable starting point for the count-data analysis.
 
