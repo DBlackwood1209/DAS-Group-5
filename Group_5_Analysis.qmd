@@ -208,7 +208,7 @@ ggplot(df_clean, aes(x = Electricity, y = Total.Number.of.Family.members)) +
   labs(title = "Distribution of Family Size by Electricity Access")
 ```
 
-It is suggested that the relationship between electricity access and household size is weaker than that observed for household type or sex of household head. The median household size is similar across the two groups, but households with electricity show a wider upper range and more large-household outliers. This indicates that electricity access may still be associated with household size, although the pattern appears less evident than for the other categorical predictors.
+The results suggest that the relationship between electricity access and household size is weaker than that observed for household type or sex of household head. The median household size is similar across the two groups, but households with electricity show a wider upper range and more large-household outliers. This indicates that electricity access may still be associated with household size, although the pattern appears less evident than for the other categorical predictors.
 
 ### Household Size Against Numeric Predictors
 
