@@ -439,9 +439,9 @@ kable(vif_df,
   kable_styling(full_width = FALSE, position = "center")
 ```
 
-To assess multicollinearity among predictors, Variance Inflation Factor (VIF) was calculated. Most VIF values are below 5, indicating no severe multicollinearity for the majority of predictors. However, log_income has a VIF of 5.01, which slightly exceeds the conventional threshold, and is highly correlated with log_food_exp (correlation ≈ 0.8).
+To assess multicollinearity among predictors, Variance Inflation Factor (VIF) was calculated. Most VIF values are below 5, indicating no severe multicollinearity for the majority of predictors. However, 'log_income' has a VIF of 5.01, which slightly exceeds the conventional threshold, and is highly correlated with 'log_food_exp' (correlation ≈ 0.8).
 
-While these values do not indicate extreme multicollinearity, they suggest a moderate degree of dependence between key explanatory variables. This is further supported by the robustness check, where the coefficient of log_income changes sign when log_food_exp is excluded.
+While these values do not indicate extreme multicollinearity, they suggest a moderate degree of dependence between key explanatory variables. This is further supported by the robustness check, where the coefficient of 'log_income' changes sign when 'log_food_exp' is excluded.
 
 This pattern is consistent with a suppression effect, where correlated variables influence each other's estimated coefficients. Therefore, although multicollinearity is not severe, it may affect the stability and interpretation of individual coefficients.
 
@@ -486,11 +486,11 @@ kable(
   kable_styling(full_width = FALSE, position = "center")
 ```
 
-The robustness of the findings was assessed by estimating an alternative specification that excludes log_food_exp. Table X compares the coefficients across the two models.
+The robustness of the findings was assessed by estimating an alternative specification that excludes 'log_food_exp'. 'Table X' compares the coefficients across the two models.
 
 The results show that the coefficient for log_income changes substantially from negative (-0.380) to positive (0.162), indicating a strong sensitivity to model specification. This suggests that food expenditure is closely related to income and captures an important aspect of household consumption associated with household size.
 
-In contrast, the coefficients for Household.Head.Age and log_floor_area remain relatively small and show only minor changes across specifications, indicating greater stability.
+In contrast, the coefficients for 'Household.Head.Age' and 'log_floor_area' remain relatively small and show only minor changes across specifications, indicating greater stability.
 
 Overall, these findings suggest that the model is not fully robust, and the estimated effects—particularly for income—should be interpreted with caution.
 
