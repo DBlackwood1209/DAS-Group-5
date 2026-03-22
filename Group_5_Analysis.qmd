@@ -478,6 +478,9 @@ comparison_food <- data.frame(
     )
   )
 
+colnames(comparison_food) <- c(
+  "Variable", "With Food", "Without Food", "Change", "Direction Change"
+)
 rownames(comparison_food) <- NULL
 
 kable(
